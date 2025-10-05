@@ -4,11 +4,58 @@ const residentsSection = document.getElementById('residentsSection');
 const measurementsSection = document.getElementById('measurementsSection');
 const eventsSection = document.getElementById('eventsSection');
 const photosSection = document.getElementById('photosSection');
+const lightbox = document.getElementById('photoLightbox');
+const lightboxImg = lightbox?.querySelector('img') ?? null;
+const lightboxCaption = lightbox?.querySelector('.lightbox__caption') ?? null;
+const lightboxClose = lightbox?.querySelector('.lightbox__close') ?? null;
 
 const LAST_URL_KEY = 'aquatrack:last-url';
 const LAST_FILE_KEY = 'aquatrack:last-file';
+const LIGHTBOX_BODY_CLASS = 'lightbox-open';
 
 let storageWarningShown = false;
+let lastPhotoTrigger = null;
+
+if (photosSection) {
+  photosSection.addEventListener('click', (event) => {
+    const card = event.target.closest('.photo-card');
+    if (!card) {
+      return;
+    }
+    event.preventDefault();
+    openPhotoCard(card);
+  });
+
+  photosSection.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+    const card = event.target.closest('.photo-card');
+    if (!card) {
+      return;
+    }
+    event.preventDefault();
+    openPhotoCard(card);
+  });
+}
+
+if (lightboxClose) {
+  lightboxClose.addEventListener('click', () => hideLightbox());
+}
+
+if (lightbox) {
+  lightbox.addEventListener('click', (event) => {
+    if (event.target === lightbox) {
+      hideLightbox();
+    }
+  });
+}
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && lightbox && !lightbox.hidden) {
+    hideLightbox();
+  }
+});
 
 function setStatus(message, tone = 'info') {
   const prefix = `[${tone}]`;
@@ -56,6 +103,10 @@ function storageRemove(key) {
 }
 
 function clearContent() {
+  if (lightbox && !lightbox.hidden) {
+    hideLightbox();
+  }
+
   for (const section of [
     tankSection,
     residentsSection,
@@ -143,7 +194,9 @@ function renderTank(tank) {
   ]
     .filter((item) => item.value && String(item.value).trim().length > 0)
     .map((item) => {
-      return `<li><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(
+      const isNotes = typeof item.label === 'string' && item.label.toLowerCase() === 'notes';
+      const classAttr = isNotes ? ' class="note-item"' : '';
+      return `<li${classAttr}><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(
         item.value
       )}</strong></li>`;
     })
@@ -341,6 +394,66 @@ function resolvePhotoUrl(url, overrideBase, jsonBase) {
   }
 }
 
+function showLightbox(url, caption = '', alt = 'Aquarium photo') {
+  if (!lightbox || !lightboxImg) return;
+
+  lightboxImg.src = url;
+  lightboxImg.alt = alt;
+
+  if (lightboxCaption) {
+    const trimmed = typeof caption === 'string' ? caption.trim() : '';
+    lightboxCaption.textContent = trimmed;
+    lightboxCaption.hidden = trimmed.length === 0;
+  }
+
+  lightbox.hidden = false;
+  try {
+    lightbox.focus({ preventScroll: true });
+  } catch (error) {
+    lightbox.focus();
+  }
+  document.body.classList.add(LIGHTBOX_BODY_CLASS);
+}
+
+function hideLightbox() {
+  if (!lightbox || !lightboxImg) return;
+
+  if (!lightbox.hidden) {
+    lightbox.hidden = true;
+    lightboxImg.src = '';
+    lightboxImg.alt = '';
+
+    if (lightboxCaption) {
+      lightboxCaption.textContent = '';
+      lightboxCaption.hidden = false;
+    }
+  }
+
+  document.body.classList.remove(LIGHTBOX_BODY_CLASS);
+
+  if (lastPhotoTrigger && typeof lastPhotoTrigger.focus === 'function') {
+    if (lastPhotoTrigger.isConnected) {
+      try {
+        lastPhotoTrigger.focus({ preventScroll: true });
+      } catch (error) {
+        lastPhotoTrigger.focus();
+      }
+    }
+    lastPhotoTrigger = null;
+  }
+}
+
+function openPhotoCard(card) {
+  if (!card) return;
+  const url = card.dataset?.fullUrl;
+  if (!url) return;
+
+  lastPhotoTrigger = card;
+  const caption = card.dataset?.caption ?? '';
+  const alt = card.dataset?.alt ?? 'Aquarium photo';
+  showLightbox(url, caption, alt);
+}
+
 function renderPhotos(photos = [], jsonBase, overrideBase) {
   const container = photosSection.querySelector('.panel-body');
   if (!photos.length) {
@@ -354,30 +467,60 @@ function renderPhotos(photos = [], jsonBase, overrideBase) {
 
   for (const photo of photos) {
     const clone = template.content.cloneNode(true);
+    const card = clone.querySelector('.photo-card');
     const img = clone.querySelector('img');
     const caption = clone.querySelector('figcaption');
 
     const resolvedUrl = resolvePhotoUrl(photo.url, overrideBase, jsonBase);
+    const altText = photo.caption ? String(photo.caption) : 'Aquarium photo';
+
     img.src = resolvedUrl;
-    img.alt = photo.caption ? escapeHtml(photo.caption) : 'Aquarium photo';
+    img.alt = altText;
+    img.decoding = 'async';
 
     const captionParts = [];
     if (photo.caption) {
       captionParts.push(`<span class="caption">${escapeHtml(photo.caption)}</span>`);
     }
+
     const metaPieces = [];
-    if (photo.takenAt) {
-      metaPieces.push(formatDate(photo.takenAt));
+    const formattedDate = photo.takenAt ? formatDate(photo.takenAt) : '';
+    if (formattedDate && formattedDate !== '—') {
+      metaPieces.push(formattedDate);
     }
     if (photo.resident) {
       metaPieces.push(photo.resident);
     }
     if (metaPieces.length) {
-      captionParts.push(
-        `<span class="meta">${metaPieces.map((piece) => escapeHtml(piece)).join(' • ')}</span>`
-      );
+      captionParts.push(`<span class="meta">${metaPieces.map((piece) => escapeHtml(piece)).join(' • ')}</span>`);
     }
+
+    const captionTextPieces = [];
+    if (photo.caption) {
+      captionTextPieces.push(String(photo.caption));
+    }
+    if (metaPieces.length) {
+      captionTextPieces.push(metaPieces.join(' • '));
+    }
+    const captionText = captionTextPieces.join(' • ').trim();
+
     caption.innerHTML = captionParts.join('');
+
+    card.classList.add('photo-card--interactive');
+    card.tabIndex = 0;
+    card.setAttribute('role', 'button');
+    card.dataset.fullUrl = resolvedUrl;
+    card.dataset.caption = captionText;
+    card.dataset.alt = altText;
+
+    if (captionText) {
+      card.setAttribute('aria-label', `View photo: ${captionText}`);
+    } else if (formattedDate && formattedDate !== '—') {
+      card.setAttribute('aria-label', `View photo taken ${formattedDate}`);
+    } else {
+      card.setAttribute('aria-label', 'View aquarium photo');
+    }
+
     fragment.appendChild(clone);
   }
 
@@ -389,6 +532,7 @@ function renderPhotos(photos = [], jsonBase, overrideBase) {
   photosSection.hidden = false;
   return true;
 }
+
 
 function render(data, options = {}) {
   clearContent();
