@@ -12,6 +12,16 @@ This project renders a JSON file (`aquatrack.json`) into a clean, responsive web
 
 All logic is client-side. Nothing is stored or written—**display-only**. You update `aquatrack.json` whenever you want to log new entries.
 
+Open `index.html` directly (file:// works) or serve the folder. The interface supports:
+
+- **Auto-load via query string**: `index.html?data=aquatrack.json`.
+- **Local file picker** with “Load JSON”.
+- **Drag & drop** a JSON file anywhere on the page.
+- **Reload** the most recently opened file/url.
+- Optional photo base overrides via `?base=/photos/` or the `"photosBase"` field.
+
+There’s a sample [`aquatrack.json`](aquatrack.json) in the repo so you can explore the layout right away.
+
 ---
 
 ## Update via Codex/ChatGPT
