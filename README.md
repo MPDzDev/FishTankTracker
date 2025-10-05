@@ -14,6 +14,13 @@ All logic is client-side. Nothing is stored or written—**display-only**. You u
 
 ---
 
+## Update via Codex/ChatGPT
+
+Use the prompt in [`prompts/codex_update_aquatrack.md`](prompts/codex_update_aquatrack.md).  
+Describe your changes in plain language; the assistant will rewrite `aquatrack.json` following the spec.
+
+---
+
 ## How it works
 
 1. Open [`index.html`](index.html) in a browser.
