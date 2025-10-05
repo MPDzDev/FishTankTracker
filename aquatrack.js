@@ -9,12 +9,56 @@ const lightboxImg = lightbox?.querySelector('img') ?? null;
 const lightboxCaption = lightbox?.querySelector('.lightbox__caption') ?? null;
 const lightboxClose = lightbox?.querySelector('.lightbox__close') ?? null;
 
+const previewContainer = document.getElementById('photoPreview');
+const previewList = document.getElementById('photoPreviewList');
+const previewEmpty = document.getElementById('photoPreviewEmpty');
+
 const LAST_URL_KEY = 'aquatrack:last-url';
 const LAST_FILE_KEY = 'aquatrack:last-file';
 const LIGHTBOX_BODY_CLASS = 'lightbox-open';
 
 let storageWarningShown = false;
 let lastPhotoTrigger = null;
+let lazyImageObserver = null;
+
+function getLazyImageObserver() {
+  if (!('IntersectionObserver' in window)) {
+    return null;
+  }
+  if (!lazyImageObserver) {
+    lazyImageObserver = new IntersectionObserver((entries, observer) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const target = entry.target;
+        observer.unobserve(target);
+        const src = target.dataset.src;
+        if (src) {
+          target.src = src;
+          target.removeAttribute('data-src');
+        }
+      }
+    }, {
+      rootMargin: '200px 0px',
+      threshold: 0.1,
+    });
+  }
+  return lazyImageObserver;
+}
+
+function registerLazyImage(img, src) {
+  if (!img || !src) return;
+  img.loading = 'lazy';
+  img.decoding = 'async';
+
+  const observer = getLazyImageObserver();
+  if (!observer) {
+    img.src = src;
+    return;
+  }
+
+  img.dataset.src = src;
+  observer.observe(img);
+}
 
 if (photosSection) {
   photosSection.addEventListener('click', (event) => {
@@ -117,6 +161,15 @@ function clearContent() {
     section.hidden = true;
     section.querySelector('.panel-body').innerHTML = '';
   }
+
+  if (previewContainer && previewList) {
+    previewList.innerHTML = '';
+    previewContainer.classList.add('is-empty');
+    if (previewEmpty) {
+      previewEmpty.hidden = false;
+    }
+  }
+
   content.classList.remove('has-data');
 }
 
@@ -394,6 +447,125 @@ function resolvePhotoUrl(url, overrideBase, jsonBase) {
   }
 }
 
+function buildPhotoDisplayData(photo) {
+  const altText = photo?.caption ? String(photo.caption) : 'Aquarium photo';
+  const captionParts = [];
+  const textPieces = [];
+  if (photo?.caption) {
+    captionParts.push(`<span class=\"caption\">${escapeHtml(photo.caption)}</span>`);
+    textPieces.push(String(photo.caption));
+  }
+
+  const metaPieces = [];
+  const formattedDate = photo?.takenAt ? formatDate(photo.takenAt) : '';
+  if (formattedDate && formattedDate !== '—') {
+    metaPieces.push(formattedDate);
+  }
+  if (photo?.resident) {
+    metaPieces.push(photo.resident);
+  }
+  if (metaPieces.length) {
+    const metaMarkup = metaPieces.map((piece) => escapeHtml(piece)).join(' • ');
+    captionParts.push(`<span class=\"meta\">${metaMarkup}</span>`);
+    textPieces.push(metaPieces.join(' • '));
+  }
+
+  const captionText = textPieces.join(' • ').trim();
+
+  return {
+    altText,
+    captionHtml: captionParts.join(''),
+    captionText,
+    formattedDate,
+  };
+}
+
+function selectPreviewPhotos(photos = []) {
+  if (!Array.isArray(photos) || photos.length === 0) {
+    return [];
+  }
+  const total = photos.length;
+  return [...photos]
+    .map((photo, index) => {
+      const ts = photo?.takenAt ? new Date(photo.takenAt).valueOf() : Number.NaN;
+      const sortKey = Number.isNaN(ts) ? -(total - index) : ts;
+      return { photo, index, sortKey };
+    })
+    .sort((a, b) => {
+      if (b.sortKey !== a.sortKey) {
+        return b.sortKey - a.sortKey;
+      }
+      return b.index - a.index;
+    })
+    .slice(0, 3)
+    .map((entry) => entry.photo);
+}
+
+function updatePhotoPreview(photos = [], jsonBase, overrideBase) {
+  if (!previewContainer || !previewList) {
+    return;
+  }
+
+  previewList.innerHTML = '';
+
+  const latest = selectPreviewPhotos(photos);
+  if (!latest.length) {
+    previewContainer.classList.add('is-empty');
+    if (previewEmpty) {
+      previewEmpty.hidden = false;
+    }
+    return;
+  }
+
+  previewContainer.classList.remove('is-empty');
+  if (previewEmpty) {
+    previewEmpty.hidden = true;
+  }
+
+  for (const photo of latest) {
+    const resolvedUrl = resolvePhotoUrl(photo.url, overrideBase, jsonBase);
+    const { altText, captionHtml, captionText, formattedDate } = buildPhotoDisplayData(photo);
+
+    const li = document.createElement('li');
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'preview-card';
+    button.dataset.fullUrl = resolvedUrl;
+    button.dataset.caption = captionText;
+    button.dataset.alt = altText;
+
+    const ariaLabel = captionText
+      ? `Open ${captionText}`
+      : formattedDate && formattedDate !== '—'
+      ? `Open photo taken ${formattedDate}`
+      : 'Open aquarium photo';
+    button.setAttribute('aria-label', ariaLabel);
+
+    const img = document.createElement('img');
+    img.alt = '';
+
+    const meta = document.createElement('span');
+    meta.className = 'preview-card__meta';
+    if (captionHtml) {
+      meta.innerHTML = captionHtml;
+    } else if (formattedDate && formattedDate !== '—') {
+      meta.innerHTML = `<span>${escapeHtml(formattedDate)}</span>`;
+    } else {
+      meta.textContent = 'View photo';
+    }
+
+    button.append(img, meta);
+    button.addEventListener('click', () => {
+      lastPhotoTrigger = button;
+      showLightbox(resolvedUrl, captionText, altText);
+    });
+
+    li.appendChild(button);
+    previewList.appendChild(li);
+    registerLazyImage(img, resolvedUrl);
+  }
+}
+
 function showLightbox(url, caption = '', alt = 'Aquarium photo') {
   if (!lightbox || !lightboxImg) return;
 
@@ -459,11 +631,13 @@ function renderPhotos(photos = [], jsonBase, overrideBase) {
   if (!photos.length) {
     container.innerHTML = '<p class="empty-state">No photos added yet.</p>';
     photosSection.hidden = false;
+    updatePhotoPreview([], jsonBase, overrideBase);
     return true;
   }
 
   const template = document.getElementById('photoCardTemplate');
   const fragment = document.createDocumentFragment();
+  const lazyQueue = [];
 
   for (const photo of photos) {
     const clone = template.content.cloneNode(true);
@@ -472,39 +646,12 @@ function renderPhotos(photos = [], jsonBase, overrideBase) {
     const caption = clone.querySelector('figcaption');
 
     const resolvedUrl = resolvePhotoUrl(photo.url, overrideBase, jsonBase);
-    const altText = photo.caption ? String(photo.caption) : 'Aquarium photo';
+    const { altText, captionHtml, captionText, formattedDate } = buildPhotoDisplayData(photo);
 
-    img.src = resolvedUrl;
     img.alt = altText;
-    img.decoding = 'async';
+    lazyQueue.push({ img, src: resolvedUrl });
 
-    const captionParts = [];
-    if (photo.caption) {
-      captionParts.push(`<span class="caption">${escapeHtml(photo.caption)}</span>`);
-    }
-
-    const metaPieces = [];
-    const formattedDate = photo.takenAt ? formatDate(photo.takenAt) : '';
-    if (formattedDate && formattedDate !== '—') {
-      metaPieces.push(formattedDate);
-    }
-    if (photo.resident) {
-      metaPieces.push(photo.resident);
-    }
-    if (metaPieces.length) {
-      captionParts.push(`<span class="meta">${metaPieces.map((piece) => escapeHtml(piece)).join(' • ')}</span>`);
-    }
-
-    const captionTextPieces = [];
-    if (photo.caption) {
-      captionTextPieces.push(String(photo.caption));
-    }
-    if (metaPieces.length) {
-      captionTextPieces.push(metaPieces.join(' • '));
-    }
-    const captionText = captionTextPieces.join(' • ').trim();
-
-    caption.innerHTML = captionParts.join('');
+    caption.innerHTML = captionHtml;
 
     card.classList.add('photo-card--interactive');
     card.tabIndex = 0;
@@ -530,9 +677,14 @@ function renderPhotos(photos = [], jsonBase, overrideBase) {
   container.innerHTML = '';
   container.appendChild(grid);
   photosSection.hidden = false;
+
+  for (const { img, src } of lazyQueue) {
+    registerLazyImage(img, src);
+  }
+
+  updatePhotoPreview(photos, jsonBase, overrideBase);
   return true;
 }
-
 
 function render(data, options = {}) {
   clearContent();
