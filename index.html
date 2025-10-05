@@ -16,24 +16,11 @@
     <header class="site-header">
       <div class="wrap">
         <h1>🐟 FishTankTracker</h1>
-        <p class="tagline">Your aquatic memories, beautifully organized.</p>
-        <div class="controls" role="group" aria-label="Data loading controls">
-          <button id="loadButton" type="button" class="btn primary">
-            Load different JSON
-          </button>
-          <input id="fileInput" type="file" accept="application/json" hidden />
-          <button id="reloadButton" type="button" class="btn">Reload last file</button>
-        </div>
-        <div id="status" role="status" aria-live="polite"></div>
+        <p class="tagline">A snapshot of our tetra starter tank journey.</p>
       </div>
     </header>
 
-    <main class="wrap" id="content" data-empty>
-      <section class="placeholder">
-        <h2>Ready when you are</h2>
-        <p class="note">Load any tank journal to reveal its story.</p>
-      </section>
-
+    <main class="wrap" id="content">
       <section id="tankSection" class="panel" hidden>
         <header>
           <h2>Tank</h2>
