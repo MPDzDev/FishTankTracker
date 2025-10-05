@@ -8,7 +8,6 @@ const residentsSection = document.getElementById('residentsSection');
 const measurementsSection = document.getElementById('measurementsSection');
 const eventsSection = document.getElementById('eventsSection');
 const photosSection = document.getElementById('photosSection');
-const dropOverlay = document.getElementById('dropOverlay');
 
 const LAST_URL_KEY = 'aquatrack:last-url';
 const LAST_FILE_KEY = 'aquatrack:last-file';
@@ -433,26 +432,8 @@ function handleFiles(files, photosBaseOverride) {
 
 function handleDrop(event) {
   event.preventDefault();
-  if (dropOverlay) {
-    dropOverlay.hidden = true;
-  }
   const baseParam = new URLSearchParams(window.location.search).get('base') ?? undefined;
   handleFiles(event.dataTransfer.files, baseParam);
-}
-
-function handleDragEnter(event) {
-  if (event.dataTransfer?.items?.length) {
-    event.preventDefault();
-    if (dropOverlay) {
-      dropOverlay.hidden = false;
-    }
-  }
-}
-
-function handleDragLeave(event) {
-  if (dropOverlay && event.target === dropOverlay) {
-    dropOverlay.hidden = true;
-  }
 }
 
 function reloadLast(photosBaseOverride) {
@@ -495,11 +476,9 @@ function init() {
 
   reloadButton.addEventListener('click', () => reloadLast(baseParam));
 
-  document.addEventListener('dragenter', handleDragEnter);
   document.addEventListener('dragover', (event) => {
     event.preventDefault();
   });
-  document.addEventListener('dragleave', handleDragLeave);
   document.addEventListener('drop', handleDrop);
 
   if (dataParam) {
