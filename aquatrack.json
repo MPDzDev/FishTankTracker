@@ -1,94 +1,56 @@
 {
   "tank": {
-    "name": "Living Room 54L",
+    "name": "Tetra Starter Line 54L",
     "volumeL": 54,
-    "start": "2025-10-01",
-    "notes": "Black sand substrate with driftwood and Anubias"
+    "start": "2024-10-04",
+    "notes": "Internal filter with sponge and bio balls, 50W heater, LED lighting with blue/white modes. Substrate stack of Fluval Stratum capped with sand and gravel."
   },
   "residents": [
     {
-      "label": "Betta Pedro",
-      "common": "Betta",
-      "sci": "Betta splendens",
-      "type": "fish",
-      "count": 1,
-      "date": "2025-10-05"
-    },
-    {
-      "label": "Cory group",
-      "common": "Corydoras",
-      "sci": "Corydoras paleatus",
-      "type": "fish",
-      "count": 6,
-      "date": "2025-10-05"
-    },
-    {
-      "label": "Amano squad",
-      "common": "Amano shrimp",
-      "sci": "Caridina multidentata",
-      "type": "shrimp",
-      "count": 5,
-      "date": "2025-10-12"
-    },
-    {
-      "label": "Anubias island",
-      "common": "Anubias barteri",
+      "label": "Cryptocoryne affinis",
+      "common": "Cryptocoryne affinis",
       "type": "plant",
-      "count": 3,
-      "date": "2025-10-01"
-    }
-  ],
-  "measurements": [
-    {
-      "t": "2025-10-15T09:30:00Z",
-      "ph": 7.2,
-      "temp": 24.6,
-      "gh": 12,
-      "kh": 7,
-      "no3": 10,
-      "no2": 0,
-      "nh3": 0,
-      "notes": "Post water change"
+      "count": 1,
+      "date": "2024-10-04",
+      "notes": "Foreground to midground rooted in substrate."
     },
     {
-      "t": "2025-10-10T08:45:00Z",
-      "ph": 7.3,
-      "temp": 24.2,
-      "gh": 13,
-      "kh": 8,
-      "no3": 12,
-      "no2": 0,
-      "nh3": 0,
-      "notes": "Before dosing fertilizer"
+      "label": "Anubias nana",
+      "common": "Anubias nana",
+      "type": "plant",
+      "count": 2,
+      "date": "2024-10-04",
+      "notes": "Epiphyte attached to driftwood and rocks."
+    },
+    {
+      "label": "Marimo moss ball",
+      "common": "Marimo moss ball",
+      "type": "algae",
+      "count": 1,
+      "date": "2024-10-04",
+      "notes": "Placed on substrate as ornamental feature."
     }
   ],
+  "measurements": [],
   "events": [
     {
-      "t": "2025-10-15T08:00:00Z",
-      "type": "water_change",
-      "v1": "30%",
-      "notes": "Prime 1 ml / 40 L"
+      "t": "2024-10-04T09:00:00Z",
+      "type": "setup",
+      "v1": "Initial fill",
+      "notes": "Filled with ~20 L reverse osmosis water topped up with Bologna tap water. Dosed Tetra AquaSafe conditioner and Tetra FilterActive bacteria starter."
     },
     {
-      "t": "2025-10-12T14:30:00Z",
-      "type": "add_resident",
-      "v1": "5 Amano shrimp",
-      "notes": "Slow drip acclimation"
+      "t": "2024-10-04T10:00:00Z",
+      "type": "hardscape",
+      "v1": "Driftwood centerpiece and grey rocks",
+      "notes": "Arranged driftwood centerpiece with decorative grey stones before planting."
+    },
+    {
+      "t": "2024-10-04T11:00:00Z",
+      "type": "planting",
+      "v1": "Initial planting",
+      "notes": "Planted Cryptocoryne affinis in the substrate, secured two Anubias nana to wood/rocks, and placed Marimo moss ball. Added Tetra PlantaStart tablets near roots."
     }
   ],
-  "photosBase": "/photos/",
-  "photos": [
-    {
-      "url": "betta-2025-10-15.jpg",
-      "caption": "Betta Pedro showing off",
-      "takenAt": "2025-10-15",
-      "resident": "Betta Pedro"
-    },
-    {
-      "url": "https://images.unsplash.com/photo-1526481280695-3c46973ed2b0",
-      "caption": "Corydoras grazing",
-      "takenAt": "2025-10-10",
-      "resident": "Cory group"
-    }
-  ]
+  "photos": []
 }
