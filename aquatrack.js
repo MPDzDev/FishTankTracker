@@ -1,0 +1,521 @@
+const statusEl = document.getElementById('status');
+const loadButton = document.getElementById('loadButton');
+const reloadButton = document.getElementById('reloadButton');
+const fileInput = document.getElementById('fileInput');
+const content = document.getElementById('content');
+const tankSection = document.getElementById('tankSection');
+const residentsSection = document.getElementById('residentsSection');
+const measurementsSection = document.getElementById('measurementsSection');
+const eventsSection = document.getElementById('eventsSection');
+const photosSection = document.getElementById('photosSection');
+const dropOverlay = document.getElementById('dropOverlay');
+
+const LAST_URL_KEY = 'aquatrack:last-url';
+const LAST_FILE_KEY = 'aquatrack:last-file';
+
+let lastLoadedFile = null;
+let lastLoadedUrl = null;
+
+function setStatus(message, tone = 'info') {
+  statusEl.textContent = message;
+  statusEl.dataset.tone = tone;
+}
+
+function clearContent() {
+  for (const section of [
+    tankSection,
+    residentsSection,
+    measurementsSection,
+    eventsSection,
+    photosSection,
+  ]) {
+    section.hidden = true;
+    section.querySelector('.panel-body').innerHTML = '';
+  }
+  content.dataset.empty = '';
+}
+
+function escapeHtml(value) {
+  if (value == null) {
+    return '';
+  }
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function formatDate(value) {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.valueOf())) {
+    return value;
+  }
+  return date.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+function formatDateTime(value) {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.valueOf())) {
+    return value;
+  }
+  return (
+    date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    }) +
+    ' · ' +
+    date.toLocaleTimeString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  );
+}
+
+function formatVolume(volumeL) {
+  if (volumeL == null) return '—';
+  const num = Number(volumeL);
+  if (Number.isNaN(num)) return volumeL;
+  return `${num.toLocaleString()} L`;
+}
+
+function showContent() {
+  delete content.dataset.empty;
+}
+
+function renderTank(tank) {
+  if (!tank) return;
+  const listItems = [
+    {
+      label: 'Name',
+      value: tank.name,
+    },
+    {
+      label: 'Volume',
+      value: formatVolume(tank.volumeL),
+    },
+    {
+      label: 'Started',
+      value: formatDate(tank.start),
+    },
+    {
+      label: 'Notes',
+      value: tank.notes,
+    },
+  ]
+    .filter((item) => item.value && String(item.value).trim().length > 0)
+    .map((item) => {
+      return `<li><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(
+        item.value
+      )}</strong></li>`;
+    })
+    .join('');
+
+  if (!listItems) return;
+
+  const markup = `<ul class="details-grid">${listItems}</ul>`;
+  tankSection.querySelector('.panel-body').innerHTML = markup;
+  tankSection.hidden = false;
+  showContent();
+}
+
+const TYPE_LABELS = {
+  fish: 'Fish',
+  shrimp: 'Shrimp',
+  snail: 'Snails',
+  plant: 'Plants',
+};
+
+function renderResidents(residents = []) {
+  if (!residents.length) return;
+
+  const groups = new Map();
+  for (const resident of residents) {
+    const key = resident.type ?? 'other';
+    if (!groups.has(key)) {
+      groups.set(key, []);
+    }
+    groups.get(key).push(resident);
+  }
+
+  const template = document.getElementById('residentGroupTemplate');
+  const fragment = document.createDocumentFragment();
+
+  for (const [type, entries] of groups.entries()) {
+    entries.sort((a, b) => {
+      const aLabel = a.label ?? '';
+      const bLabel = b.label ?? '';
+      return aLabel.localeCompare(bLabel, undefined, { sensitivity: 'base' });
+    });
+    const clone = template.content.cloneNode(true);
+    const heading = clone.querySelector('h3');
+    heading.textContent = TYPE_LABELS[type] ?? type;
+    const table = clone.querySelector('table');
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th scope="col">Label</th>
+          <th scope="col">Common</th>
+          <th scope="col">Scientific</th>
+          <th scope="col">Count</th>
+          <th scope="col">Since</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${entries
+          .map((entry) => {
+            return `
+              <tr>
+                <td>${escapeHtml(entry.label)}</td>
+                <td>${escapeHtml(entry.common)}</td>
+                <td>${escapeHtml(entry.sci ?? '')}</td>
+                <td>${escapeHtml(entry.count ?? '')}</td>
+                <td>${escapeHtml(formatDate(entry.date))}</td>
+              </tr>
+            `;
+          })
+          .join('')}
+      </tbody>`;
+    fragment.appendChild(clone);
+  }
+
+  const container = residentsSection.querySelector('.panel-body');
+  container.innerHTML = '';
+  container.appendChild(fragment);
+  residentsSection.hidden = false;
+  showContent();
+}
+
+function renderMeasurements(measurements = []) {
+  const container = measurementsSection.querySelector('.panel-body');
+  if (!measurements.length) {
+    container.innerHTML = '<p class="empty-state">No measurements logged yet.</p>';
+    measurementsSection.hidden = false;
+    showContent();
+    return;
+  }
+
+  const header = `
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>pH</th>
+        <th>Temp °C</th>
+        <th>GH</th>
+        <th>KH</th>
+        <th>NO₃</th>
+        <th>NO₂</th>
+        <th>NH₃</th>
+        <th>Notes</th>
+      </tr>
+    </thead>`;
+
+  const rows = measurements
+    .map((measurement) => {
+      const cells = [
+        formatDateTime(measurement.t),
+        measurement.ph ?? '—',
+        measurement.temp ?? '—',
+        measurement.gh ?? '—',
+        measurement.kh ?? '—',
+        measurement.no3 ?? '—',
+        measurement.no2 ?? '—',
+        measurement.nh3 ?? '—',
+        measurement.notes ? escapeHtml(measurement.notes) : '—',
+      ].map((value) => `<td>${escapeHtml(value)}</td>`);
+      return `<tr>${cells.join('')}</tr>`;
+    })
+    .join('');
+
+  container.innerHTML = `<div class="table-wrapper"><table>${header}<tbody>${rows}</tbody></table></div>`;
+  measurementsSection.hidden = false;
+  showContent();
+}
+
+const EVENT_LABELS = {
+  water_change: 'Water change',
+  filter_clean: 'Filter clean',
+  dose: 'Dose',
+  treatment: 'Treatment',
+  note: 'Note',
+  add_resident: 'Added resident',
+  remove_resident: 'Removed resident',
+};
+
+function renderEvents(events = []) {
+  const container = eventsSection.querySelector('.panel-body');
+  if (!events.length) {
+    container.innerHTML = '<p class="empty-state">No events logged yet.</p>';
+    eventsSection.hidden = false;
+    showContent();
+    return;
+  }
+
+  const header = `
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Event</th>
+        <th>Details</th>
+        <th>Notes</th>
+      </tr>
+    </thead>`;
+
+  const rows = events
+    .map((event) => {
+      const eventType = EVENT_LABELS[event.type] ?? event.type ?? 'Event';
+      const detail = event.v1 ? `<span class="tag">${escapeHtml(event.v1)}</span>` : '—';
+      return `
+        <tr>
+          <td>${escapeHtml(formatDateTime(event.t))}</td>
+          <td>${escapeHtml(eventType)}</td>
+          <td>${detail}</td>
+          <td>${event.notes ? escapeHtml(event.notes) : '—'}</td>
+        </tr>
+      `;
+    })
+    .join('');
+
+  container.innerHTML = `<div class="table-wrapper"><table>${header}<tbody>${rows}</tbody></table></div>`;
+  eventsSection.hidden = false;
+  showContent();
+}
+
+function resolvePhotoUrl(url, overrideBase, jsonBase) {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (/^(?:[a-z]+:)?\/\//i.test(trimmed) || trimmed.startsWith('data:')) {
+    return trimmed;
+  }
+  const base = overrideBase ?? jsonBase ?? '';
+  if (!base) {
+    return trimmed;
+  }
+  try {
+    const baseUrl = new URL(base, window.location.href);
+    return new URL(trimmed, baseUrl).href;
+  } catch (error) {
+    const normalizedBase = base.endsWith('/') ? base.slice(0, -1) : base;
+    const normalizedPath = trimmed.startsWith('/') ? trimmed.slice(1) : trimmed;
+    return `${normalizedBase}/${normalizedPath}`;
+  }
+}
+
+function renderPhotos(photos = [], jsonBase, overrideBase) {
+  const container = photosSection.querySelector('.panel-body');
+  if (!photos.length) {
+    container.innerHTML = '<p class="empty-state">No photos added yet.</p>';
+    photosSection.hidden = false;
+    showContent();
+    return;
+  }
+
+  const template = document.getElementById('photoCardTemplate');
+  const fragment = document.createDocumentFragment();
+
+  for (const photo of photos) {
+    const clone = template.content.cloneNode(true);
+    const figure = clone.querySelector('figure');
+    const img = clone.querySelector('img');
+    const caption = clone.querySelector('figcaption');
+
+    const resolvedUrl = resolvePhotoUrl(photo.url, overrideBase, jsonBase);
+    img.src = resolvedUrl;
+    img.alt = photo.caption ? escapeHtml(photo.caption) : 'Aquarium photo';
+
+    const captionParts = [];
+    if (photo.caption) {
+      captionParts.push(`<span class="caption">${escapeHtml(photo.caption)}</span>`);
+    }
+    const metaPieces = [];
+    if (photo.takenAt) {
+      metaPieces.push(formatDate(photo.takenAt));
+    }
+    if (photo.resident) {
+      metaPieces.push(photo.resident);
+    }
+    if (metaPieces.length) {
+      captionParts.push(
+        `<span class="meta">${metaPieces.map((piece) => escapeHtml(piece)).join(' • ')}</span>`
+      );
+    }
+    caption.innerHTML = captionParts.join('');
+    fragment.appendChild(clone);
+  }
+
+  const grid = document.createElement('div');
+  grid.className = 'photo-grid';
+  grid.appendChild(fragment);
+  container.innerHTML = '';
+  container.appendChild(grid);
+  photosSection.hidden = false;
+  showContent();
+}
+
+function render(data, options = {}) {
+  clearContent();
+  if (!data || typeof data !== 'object') {
+    setStatus('Invalid data: expected an object.', 'error');
+    return;
+  }
+
+  renderTank(data.tank);
+  renderResidents(Array.isArray(data.residents) ? data.residents : []);
+  renderMeasurements(Array.isArray(data.measurements) ? data.measurements : []);
+  renderEvents(Array.isArray(data.events) ? data.events : []);
+  renderPhotos(
+    Array.isArray(data.photos) ? data.photos : [],
+    data.photosBase,
+    options.photosBase
+  );
+
+  if (!content.dataset.empty) {
+    setStatus('Loaded successfully.', 'success');
+  }
+}
+
+async function loadFromUrl(url, photosBaseOverride) {
+  try {
+    setStatus('Loading…');
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+    const data = await response.json();
+    render(data, { photosBase: photosBaseOverride });
+    lastLoadedUrl = url;
+    localStorage.setItem(LAST_URL_KEY, url);
+    localStorage.removeItem(LAST_FILE_KEY);
+  } catch (error) {
+    console.error(error);
+    setStatus(`Failed to load ${url}: ${error.message}`, 'error');
+  }
+}
+
+function loadFromFile(file, photosBaseOverride) {
+  const reader = new FileReader();
+  reader.addEventListener('load', () => {
+    try {
+      const json = JSON.parse(reader.result);
+      render(json, { photosBase: photosBaseOverride });
+      lastLoadedFile = {
+        name: file.name,
+        contents: reader.result,
+      };
+      localStorage.setItem(LAST_FILE_KEY, reader.result);
+      localStorage.removeItem(LAST_URL_KEY);
+      setStatus(`Loaded ${file.name}.`, 'success');
+    } catch (error) {
+      console.error(error);
+      setStatus(`Could not parse ${file.name}: ${error.message}`, 'error');
+    }
+  });
+  reader.readAsText(file);
+}
+
+function handleFiles(files, photosBaseOverride) {
+  if (!files?.length) return;
+  const [file] = files;
+  if (file.type && file.type !== 'application/json') {
+    setStatus('Please select a JSON file.', 'error');
+    return;
+  }
+  loadFromFile(file, photosBaseOverride);
+}
+
+function handleDrop(event) {
+  event.preventDefault();
+  dropOverlay.hidden = true;
+  const baseParam = new URLSearchParams(window.location.search).get('base') ?? undefined;
+  handleFiles(event.dataTransfer.files, baseParam);
+}
+
+function handleDragEnter(event) {
+  if (event.dataTransfer?.items?.length) {
+    event.preventDefault();
+    dropOverlay.hidden = false;
+  }
+}
+
+function handleDragLeave(event) {
+  if (event.target === dropOverlay) {
+    dropOverlay.hidden = true;
+  }
+}
+
+function reloadLast(photosBaseOverride) {
+  if (lastLoadedUrl) {
+    loadFromUrl(lastLoadedUrl, photosBaseOverride);
+    return;
+  }
+  const storedUrl = localStorage.getItem(LAST_URL_KEY);
+  if (storedUrl) {
+    loadFromUrl(storedUrl, photosBaseOverride);
+    return;
+  }
+  const storedFile = localStorage.getItem(LAST_FILE_KEY);
+  if (storedFile) {
+    try {
+      const json = JSON.parse(storedFile);
+      render(json, { photosBase: photosBaseOverride });
+      setStatus('Reloaded last local file.', 'success');
+      return;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+  setStatus('No previous file to reload yet.', 'info');
+}
+
+function init() {
+  const params = new URLSearchParams(window.location.search);
+  const dataParam = params.get('data');
+  const baseParam = params.get('base') ?? undefined;
+
+  loadButton.addEventListener('click', () => {
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', (event) => {
+    handleFiles(event.target.files, baseParam);
+    fileInput.value = '';
+  });
+
+  reloadButton.addEventListener('click', () => reloadLast(baseParam));
+
+  document.addEventListener('dragenter', handleDragEnter);
+  document.addEventListener('dragover', (event) => {
+    event.preventDefault();
+  });
+  document.addEventListener('dragleave', handleDragLeave);
+  document.addEventListener('drop', handleDrop);
+
+  if (dataParam) {
+    const url = decodeURIComponent(dataParam);
+    loadFromUrl(url, baseParam);
+  } else {
+    const storedUrl = localStorage.getItem(LAST_URL_KEY);
+    const storedFile = localStorage.getItem(LAST_FILE_KEY);
+    if (storedUrl) {
+      loadFromUrl(storedUrl, baseParam);
+    } else if (storedFile) {
+      try {
+        const json = JSON.parse(storedFile);
+        render(json, { photosBase: baseParam });
+        setStatus('Loaded most recent local file.', 'success');
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  }
+}
+
+init();
