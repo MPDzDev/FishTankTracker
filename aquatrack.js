@@ -1,9 +1,51 @@
+const statusEl = document.getElementById('status');
+const loadButton = document.getElementById('loadButton');
+const reloadButton = document.getElementById('reloadButton');
+const fileInput = document.getElementById('fileInput');
 const content = document.getElementById('content');
 const tankSection = document.getElementById('tankSection');
 const residentsSection = document.getElementById('residentsSection');
 const measurementsSection = document.getElementById('measurementsSection');
 const eventsSection = document.getElementById('eventsSection');
 const photosSection = document.getElementById('photosSection');
+
+const LAST_URL_KEY = 'aquatrack:last-url';
+const LAST_FILE_KEY = 'aquatrack:last-file';
+
+let lastLoadedFile = null;
+let lastLoadedUrl = null;
+
+function setStatus(message, tone = 'info') {
+  if (!statusEl) return;
+  statusEl.textContent = message ?? '';
+  statusEl.dataset.tone = tone;
+  statusEl.hidden = !message;
+}
+
+function safeGetItem(key) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch (error) {
+    console.warn('localStorage get failed', error);
+    return null;
+  }
+}
+
+function safeSetItem(key, value) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch (error) {
+    console.warn('localStorage set failed', error);
+  }
+}
+
+function safeRemoveItem(key) {
+  try {
+    window.localStorage.removeItem(key);
+  } catch (error) {
+    console.warn('localStorage remove failed', error);
+  }
+}
 
 function clearContent() {
   for (const section of [
@@ -344,7 +386,8 @@ function render(data, options = {}) {
   clearContent();
   if (!data || typeof data !== 'object') {
     console.error('Invalid data: expected an object.');
-    return;
+    setStatus('Invalid data: expected an object.', 'error');
+    return false;
   }
 
   let hasContent = false;
@@ -366,6 +409,8 @@ function render(data, options = {}) {
   if (hasContent) {
     content.classList.add('has-data');
   }
+
+  return hasContent;
 }
 
 const DEFAULT_DATA = {
@@ -428,4 +473,208 @@ const DEFAULT_DATA = {
   photos: [],
 };
 
-render(DEFAULT_DATA);
+async function loadFromUrl(url, photosBaseOverride) {
+  try {
+    setStatus(`Loading ${url}…`);
+    const response = await fetch(url, { cache: 'no-cache' });
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+    const data = await response.json();
+    const hasContent = render(data, { photosBase: photosBaseOverride });
+    if (hasContent) {
+      setStatus(`Loaded ${url}.`, 'success');
+    } else {
+      setStatus(`Loaded ${url}, but it did not include any sections.`, 'info');
+    }
+    lastLoadedUrl = url;
+    lastLoadedFile = null;
+    safeSetItem(LAST_URL_KEY, url);
+    safeRemoveItem(LAST_FILE_KEY);
+  } catch (error) {
+    console.error(error);
+    setStatus(`Failed to load ${url}: ${error.message}`, 'error');
+    if (!content.classList.contains('has-data')) {
+      render(DEFAULT_DATA);
+    }
+  }
+}
+
+function loadFromFile(file, photosBaseOverride) {
+  if (!file) return;
+  const reader = new FileReader();
+  setStatus(`Loading ${file.name}…`);
+  reader.addEventListener('load', () => {
+    try {
+      const json = JSON.parse(reader.result);
+      const hasContent = render(json, { photosBase: photosBaseOverride });
+      lastLoadedFile = {
+        name: file.name,
+        contents: reader.result,
+      };
+      lastLoadedUrl = null;
+      safeSetItem(LAST_FILE_KEY, reader.result);
+      safeRemoveItem(LAST_URL_KEY);
+      if (hasContent) {
+        setStatus(`Loaded ${file.name}.`, 'success');
+      } else {
+        setStatus(`${file.name} did not include any sections.`, 'info');
+      }
+    } catch (error) {
+      console.error(error);
+      setStatus(`Could not parse ${file.name}: ${error.message}`, 'error');
+      if (!content.classList.contains('has-data')) {
+        render(DEFAULT_DATA);
+      }
+    }
+  });
+  reader.addEventListener('error', () => {
+    console.error(reader.error);
+    setStatus(
+      `Could not read ${file.name}: ${reader.error?.message ?? 'Unknown error'}`,
+      'error'
+    );
+    if (!content.classList.contains('has-data')) {
+      render(DEFAULT_DATA);
+    }
+  });
+  reader.readAsText(file);
+}
+
+function handleFiles(files, photosBaseOverride) {
+  if (!files?.length) return;
+  const [file] = files;
+  if (file.type && file.type !== 'application/json' && file.type !== 'text/json') {
+    setStatus('Please select a JSON file.', 'error');
+    if (!content.classList.contains('has-data')) {
+      render(DEFAULT_DATA);
+    }
+    return;
+  }
+  loadFromFile(file, photosBaseOverride);
+}
+
+function handleDrop(event) {
+  event.preventDefault();
+  const baseParam = new URLSearchParams(window.location.search).get('base') ?? undefined;
+  if (event.dataTransfer?.files?.length) {
+    handleFiles(event.dataTransfer.files, baseParam);
+  }
+}
+
+function reloadLast(photosBaseOverride) {
+  if (lastLoadedUrl) {
+    loadFromUrl(lastLoadedUrl, photosBaseOverride);
+    return;
+  }
+
+  const storedUrl = safeGetItem(LAST_URL_KEY);
+  if (storedUrl) {
+    loadFromUrl(storedUrl, photosBaseOverride);
+    return;
+  }
+
+  if (lastLoadedFile) {
+    try {
+      const json = JSON.parse(lastLoadedFile.contents);
+      const hasContent = render(json, { photosBase: photosBaseOverride });
+      if (hasContent) {
+        setStatus(`Reloaded ${lastLoadedFile.name}.`, 'success');
+      } else {
+        setStatus(`${lastLoadedFile.name} did not include any sections.`, 'info');
+      }
+      return;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  const storedFile = safeGetItem(LAST_FILE_KEY);
+  if (storedFile) {
+    try {
+      const json = JSON.parse(storedFile);
+      const hasContent = render(json, { photosBase: photosBaseOverride });
+      if (hasContent) {
+        setStatus('Reloaded last local file.', 'success');
+      } else {
+        setStatus('Last local file did not include any sections.', 'info');
+      }
+      lastLoadedFile = {
+        name: 'Local JSON',
+        contents: storedFile,
+      };
+      lastLoadedUrl = null;
+      return;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  setStatus('No previous file to reload yet.', 'info');
+}
+
+function init() {
+  const params = new URLSearchParams(window.location.search);
+  const dataParam = params.get('data');
+  const baseParam = params.get('base') ?? undefined;
+
+  if (loadButton && fileInput) {
+    loadButton.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', (event) => {
+      handleFiles(event.target.files, baseParam);
+      fileInput.value = '';
+    });
+  } else if (loadButton || fileInput) {
+    console.warn('Load controls incomplete: file picker disabled.');
+  }
+
+  if (reloadButton) {
+    reloadButton.addEventListener('click', () => reloadLast(baseParam));
+  }
+
+  document.addEventListener('dragover', (event) => {
+    event.preventDefault();
+  });
+  document.addEventListener('drop', handleDrop);
+
+  if (dataParam) {
+    const url = decodeURIComponent(dataParam);
+    loadFromUrl(url, baseParam);
+    return;
+  }
+
+  const storedUrl = safeGetItem(LAST_URL_KEY);
+  if (storedUrl) {
+    loadFromUrl(storedUrl, baseParam);
+    return;
+  }
+
+  const storedFile = safeGetItem(LAST_FILE_KEY);
+  if (storedFile) {
+    try {
+      const json = JSON.parse(storedFile);
+      const hasContent = render(json, { photosBase: baseParam });
+      if (hasContent) {
+        setStatus('Loaded most recent local file.', 'success');
+      } else {
+        setStatus('Most recent local file did not include any sections.', 'info');
+      }
+      lastLoadedFile = {
+        name: 'Local JSON',
+        contents: storedFile,
+      };
+      lastLoadedUrl = null;
+      return;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  render(DEFAULT_DATA);
+  setStatus('Showing bundled sample data. Load your JSON to replace it.', 'info');
+}
+
+init();

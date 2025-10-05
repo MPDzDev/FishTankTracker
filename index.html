@@ -17,6 +17,12 @@
       <div class="wrap">
         <h1>🐟 FishTankTracker</h1>
         <p class="tagline">A snapshot of our tetra starter tank journey.</p>
+        <div class="controls" role="group" aria-label="Data loading controls">
+          <button id="loadButton" type="button" class="btn primary">Load JSON</button>
+          <input id="fileInput" type="file" accept="application/json" hidden />
+          <button id="reloadButton" type="button" class="btn">Reload last</button>
+        </div>
+        <p id="status" class="status" role="status" aria-live="polite" hidden></p>
       </div>
     </header>
 
