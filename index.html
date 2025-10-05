@@ -17,14 +17,16 @@
       <div class="wrap">
         <h1>🐟 FishTankTracker</h1>
         <p class="tagline">
-          Load any <code>aquatrack.json</code> file to explore your aquarium history.
-          Everything runs in your browser – no login, no uploads.
+          Explore your aquarium history right away with the bundled
+          <code>aquatrack.json</code>. Everything runs in your browser – no login,
+          no uploads.
         </p>
         <div class="controls" role="group" aria-label="Data loading controls">
-          <button id="loadButton" type="button" class="btn primary">Load JSON</button>
+          <button id="loadButton" type="button" class="btn primary">
+            Load different JSON
+          </button>
           <input id="fileInput" type="file" accept="application/json" hidden />
           <button id="reloadButton" type="button" class="btn">Reload last file</button>
-          <span class="hint">Tip: drag &amp; drop a JSON file anywhere on the page.</span>
         </div>
         <div id="status" role="status" aria-live="polite"></div>
       </div>
@@ -32,18 +34,10 @@
 
     <main class="wrap" id="content" data-empty>
       <section class="placeholder">
-        <h2>Bring your tank to life</h2>
-        <ol>
-          <li>Click <strong>Load JSON</strong> and pick an <code>aquatrack.json</code>.</li>
-          <li>Or add <code>?data=aquatrack.json</code> to the URL to auto-load.</li>
-          <li>
-            Optional: add <code>&amp;base=/photos/</code> or set
-            <code>"photosBase"</code> inside the JSON for local photo folders.
-          </li>
-        </ol>
+        <h2>Loading your aquarium</h2>
         <p class="note">
-          Not sure where to start? Try the bundled
-          <a href="aquatrack.json" id="demoLink">sample data</a>.
+          The default <code>aquatrack.json</code> loads automatically. Use the
+          buttons above if you want to explore another file.
         </p>
       </section>
 
@@ -106,12 +100,6 @@
         <figcaption></figcaption>
       </figure>
     </template>
-
-    <div id="dropOverlay" hidden>
-      <div class="overlay-content">
-        <p>Drop your <code>aquatrack.json</code> to load it.</p>
-      </div>
-    </div>
 
     <script src="aquatrack.js" type="module"></script>
   </body>

@@ -433,7 +433,9 @@ function handleFiles(files, photosBaseOverride) {
 
 function handleDrop(event) {
   event.preventDefault();
-  dropOverlay.hidden = true;
+  if (dropOverlay) {
+    dropOverlay.hidden = true;
+  }
   const baseParam = new URLSearchParams(window.location.search).get('base') ?? undefined;
   handleFiles(event.dataTransfer.files, baseParam);
 }
@@ -441,12 +443,14 @@ function handleDrop(event) {
 function handleDragEnter(event) {
   if (event.dataTransfer?.items?.length) {
     event.preventDefault();
-    dropOverlay.hidden = false;
+    if (dropOverlay) {
+      dropOverlay.hidden = false;
+    }
   }
 }
 
 function handleDragLeave(event) {
-  if (event.target === dropOverlay) {
+  if (dropOverlay && event.target === dropOverlay) {
     dropOverlay.hidden = true;
   }
 }
@@ -506,15 +510,21 @@ function init() {
     const storedFile = localStorage.getItem(LAST_FILE_KEY);
     if (storedUrl) {
       loadFromUrl(storedUrl, baseParam);
-    } else if (storedFile) {
+      return;
+    }
+
+    if (storedFile) {
       try {
         const json = JSON.parse(storedFile);
         render(json, { photosBase: baseParam });
         setStatus('Loaded most recent local file.', 'success');
+        return;
       } catch (error) {
         console.error(error);
       }
     }
+
+    loadFromUrl('aquatrack.json', baseParam);
   }
 }
 
