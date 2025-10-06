@@ -49,8 +49,7 @@
 
 body {
   margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--bg);
   background-attachment: fixed;
   color: var(--text);
@@ -166,27 +165,30 @@ body.lightbox-open {
     margin: 0;
   }
 
-  .site-header {
-  }
 }
 
 
 
 .preview-deck {
-  position: relative;
+  display: flex;
   width: 260px;
   height: 180px;
   list-style: none;
   margin: 0;
   padding: 0;
+  gap: 0.8rem;
+  align-items: stretch;
+  justify-content: flex-end;
 }
 
 .preview-deck li {
-  position: absolute;
-  inset: 0;
+  flex: 1 1 0;
+  min-width: 0;
+  position: relative;
 }
 
 .preview-card {
+  --card-tilt: none;
   width: 100%;
   height: 100%;
   border-radius: 18px;
@@ -201,7 +203,7 @@ body.lightbox-open {
   padding: 0;
   position: relative;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
-  transform: var(--preview-transform, none);
+  transform: var(--card-tilt);
 }
 
 .preview-card img {
@@ -246,7 +248,7 @@ body.lightbox-open {
 
 .preview-card:focus-visible,
 .preview-card:hover {
-  transform: var(--preview-transform, none) translateY(-4px);
+  transform: var(--card-tilt) translateY(-6px);
   box-shadow: 0 18px 36px rgba(12, 20, 28, 0.35);
 }
 
@@ -256,17 +258,15 @@ body.lightbox-open {
 }
 
 .preview-deck li:nth-child(1) .preview-card {
-  --preview-transform: rotate(-6deg) translateY(0);
+  --card-tilt: rotate(-2deg);
 }
 
 .preview-deck li:nth-child(2) .preview-card {
-  --preview-transform: rotate(4deg) translate(16px, 6px);
-  z-index: 2;
+  --card-tilt: rotate(3deg);
 }
 
 .preview-deck li:nth-child(3) .preview-card {
-  --preview-transform: rotate(-2deg) translate(-10px, 12px);
-  z-index: 3;
+  --card-tilt: rotate(-4deg);
 }
 
 .preview-card:focus-visible {
@@ -274,7 +274,6 @@ body.lightbox-open {
   outline-offset: 2px;
 }
 
-}
 
 @media (prefers-color-scheme: dark) {
   .preview-card {
@@ -483,7 +482,7 @@ tbody td {
 
 .photo-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1.1rem;
 }
 
@@ -540,6 +539,13 @@ tbody td {
 
 .photo-card figcaption .caption {
   font-weight: 600;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  min-height: calc(1.1em * 3);
 }
 
 .photo-card figcaption .meta {
@@ -664,7 +670,7 @@ tbody td {
   }
 
   .photo-grid {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 0.85rem;
   }
 

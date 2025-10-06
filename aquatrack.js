@@ -465,12 +465,12 @@ function buildPhotoDisplayData(photo) {
     metaPieces.push(photo.resident);
   }
   if (metaPieces.length) {
-    const metaMarkup = metaPieces.map((piece) => escapeHtml(piece)).join(' • ');
+    const metaMarkup = metaPieces.map((piece) => escapeHtml(piece)).join(' | ');
     captionParts.push(`<span class=\"meta\">${metaMarkup}</span>`);
-    textPieces.push(metaPieces.join(' • '));
+    textPieces.push(metaPieces.join(' | '));
   }
 
-  const captionText = textPieces.join(' • ').trim();
+  const captionText = textPieces.join(' | ').trim();
 
   return {
     altText,
@@ -480,25 +480,28 @@ function buildPhotoDisplayData(photo) {
   };
 }
 
-function selectPreviewPhotos(photos = []) {
+function sortPhotosLatestFirst(photos = []) {
   if (!Array.isArray(photos) || photos.length === 0) {
     return [];
   }
   const total = photos.length;
-  return [...photos]
+  return photos
     .map((photo, index) => {
       const ts = photo?.takenAt ? new Date(photo.takenAt).valueOf() : Number.NaN;
       const sortKey = Number.isNaN(ts) ? -(total - index) : ts;
       return { photo, index, sortKey };
     })
     .sort((a, b) => {
-      if (b.sortKey !== a.sortKey) {
+      if (a.sortKey !== b.sortKey) {
         return b.sortKey - a.sortKey;
       }
       return b.index - a.index;
     })
-    .slice(0, 3)
     .map((entry) => entry.photo);
+}
+
+function selectPreviewPhotos(photos = []) {
+  return sortPhotosLatestFirst(photos).slice(0, 3);
 }
 
 function updatePhotoPreview(photos = [], jsonBase, overrideBase) {
@@ -639,7 +642,9 @@ function renderPhotos(photos = [], jsonBase, overrideBase) {
   const fragment = document.createDocumentFragment();
   const lazyQueue = [];
 
-  for (const photo of photos) {
+  const orderedPhotos = sortPhotosLatestFirst(photos);
+
+  for (const photo of orderedPhotos) {
     const clone = template.content.cloneNode(true);
     const card = clone.querySelector('.photo-card');
     const img = clone.querySelector('img');
@@ -682,7 +687,7 @@ function renderPhotos(photos = [], jsonBase, overrideBase) {
     registerLazyImage(img, src);
   }
 
-  updatePhotoPreview(photos, jsonBase, overrideBase);
+  updatePhotoPreview(orderedPhotos, jsonBase, overrideBase);
   return true;
 }
 
