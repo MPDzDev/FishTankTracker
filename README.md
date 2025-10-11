@@ -1,4 +1,4 @@
-# 🐟 FishTankTracker
+# FishTankTracker
 
 Static, zero-backend aquarium tracker.
 
@@ -6,21 +6,21 @@ This project renders a JSON file (`aquatrack.json`) into a clean, responsive web
 
 - Tank details (name, volume, notes, start date)
 - Residents (fish, shrimp, snails, plants)
-- Measurements (pH, temp, GH, KH, NO₃, NO₂, NH₃, notes)
+- Measurements (pH, temp, GH, KH, NO3, NO2, NH3, notes)
 - Events (water changes, treatments, filter cleans, notes)
 - Photo gallery (with optional captions, dates, resident references)
 
-All logic is client-side. Nothing is stored or written—**display-only**. You update `aquatrack.json` whenever you want to log new entries.
+All logic is client-side. Nothing is stored or written—display-only. Update `aquatrack.json` whenever you want to log new entries.
 
 Open `index.html` directly (file:// works) or serve the folder. The interface supports:
 
-- **Auto-load via query string**: `index.html?data=aquatrack.json`.
-- **Local file picker** with “Load JSON”.
-- **Drag & drop** a JSON file anywhere on the page.
-- **Reload** the most recently opened file/url.
-- Optional photo base overrides via `?base=/photos/` or the `"photosBase"` field.
+- Auto-load via query string: `index.html?data=aquatrack.json`
+- Local file picker with “Load JSON”
+- Drag and drop a JSON file anywhere on the page
+- Reload of the most recently opened file or URL
+- Optional photo base overrides via `?base=/photos/` or the `"photosBase"` field
 
-There’s a sample [`aquatrack.json`](aquatrack.json) in the repo so you can explore the layout right away.
+There is a sample [`aquatrack.json`](aquatrack.json) in the repo so you can explore the layout right away.
 
 ---
 
@@ -35,17 +35,10 @@ Describe your changes in plain language; the assistant will rewrite `aquatrack.j
 
 1. Open [`index.html`](index.html) in a browser.
 2. Load data from a JSON file by any of these methods:
-   - Pass it via URL query:
-     ```
-     index.html?data=aquatrack.json
-     ```
+   - Pass it via URL query: `index.html?data=aquatrack.json`
    - Click **Load JSON** on the page.
-   - Drag & drop a JSON file onto the page.
-3. If you keep photos locally in `/photos/`, add a base parameter to the URL:
-   ```
-   index.html?data=aquatrack.json&base=/photos/
-   ```
-   Or define `"photosBase": "/photos/"` inside the JSON file.
+   - Drag and drop a JSON file onto the page.
+3. If you keep photos locally in `/photos/`, add a base parameter to the URL: `index.html?data=aquatrack.json&base=/photos/`, or define `"photosBase": "/photos/"` inside the JSON file.
 
 ---
 
@@ -135,9 +128,10 @@ You can host anywhere that serves static files:
 ## Workflow with Codex/ChatGPT
 
 - Keep `aquatrack.json` as the single source of truth.
-- When you log something new (e.g., “add 24.5 °C, pH 7.2, 2025-10-06”), Codex/ChatGPT can rewrite the JSON with the new entry.
+- When you log something new (e.g., "add 24.5 C, pH 7.2, 2025-10-06"), Codex/ChatGPT can rewrite the JSON with the new entry.
 - Commit and push the updated JSON to GitHub.
-- Reload the page—new data appears instantly.
+- Reload the page; new data appears instantly.
+- Keep the `DEFAULT_DATA` sample in `aquatrack.js` minimal so future updates only adjust a small fallback, not the full production log.
 
 ---
 
