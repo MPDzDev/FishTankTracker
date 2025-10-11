@@ -835,9 +835,9 @@ const DEFAULT_DATA = {
       label: 'Cryptocoryne affinis',
       common: 'Cryptocoryne affinis',
       type: 'plant',
-      count: 1,
+      count: 2,
       date: '2024-10-04',
-      notes: 'Foreground to midground rooted in substrate.',
+      notes: 'Foreground to midground rooted in substrate (two plants).',
     },
     {
       label: 'Anubias nana',
@@ -851,9 +851,17 @@ const DEFAULT_DATA = {
       label: 'Marimo moss ball',
       common: 'Marimo moss ball',
       type: 'algae',
-      count: 1,
+      count: 2,
       date: '2024-10-04',
-      notes: 'Placed on substrate as ornamental feature.',
+      notes: 'Pair placed on substrate as ornamental features.',
+    },
+    {
+      label: 'Hygrophila siamensis',
+      common: 'Hygrophila siamensis',
+      type: 'plant',
+      count: 6,
+      date: '2024-10-11',
+      notes: 'Split into left and right background groupings for fast vertical growth.',
     },
   ],
   measurements: [],
@@ -876,10 +884,33 @@ const DEFAULT_DATA = {
       type: 'planting',
       v1: 'Initial planting',
       notes:
-        'Planted Cryptocoryne affinis in the substrate, secured two Anubias nana to wood/rocks, and placed Marimo moss ball. Added Tetra PlantaStart tablets near roots.',
+        'Planted Cryptocoryne affinis in the substrate, secured two Anubias nana to wood/rocks, and placed two Marimo moss balls. Added Tetra PlantaStart tablets near roots.',
+    },
+    {
+      t: '2024-10-11T15:00:00Z',
+      type: 'planting',
+      v1: 'Added Hygrophila siamensis',
+      notes:
+        'Removed rockwool, trimmed melted leaves, and planted clumps on both back corners for a quick-growing backdrop.',
     },
   ],
-  photos: [],
+  photos: [
+    {
+      url: 'photos/2024-10-05-first-fill.png',
+      caption: 'Hazy initial fill with freshly planted crypts and Anubias',
+      takenAt: '2024-10-05',
+    },
+    {
+      url: 'photos/2024-10-06-water-clearing.png',
+      caption: 'Water clearing but still reading zero ammonia',
+      takenAt: '2024-10-06',
+    },
+    {
+      url: 'photos/2024-10-11-hygrophila-after.jpg',
+      caption: 'Background Hygrophila siamensis filling in both back corners',
+      takenAt: '2024-10-11',
+    },
+  ],
 };
 
 init();

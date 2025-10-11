@@ -29,6 +29,14 @@
       "count": 2,
       "date": "2024-10-04",
       "notes": "Pair placed on substrate as ornamental features."
+    },
+    {
+      "label": "Hygrophila siamensis",
+      "common": "Hygrophila siamensis",
+      "type": "plant",
+      "count": 6,
+      "date": "2024-10-11",
+      "notes": "Split the stems into left and right background groupings to create height."
     }
   ],
   "measurements": [],
@@ -50,6 +58,12 @@
       "type": "planting",
       "v1": "Initial planting",
       "notes": "Planted Cryptocoryne affinis in the substrate, secured two Anubias nana to wood/rocks, and placed two Marimo moss balls. Added Tetra PlantaStart tablets near roots."
+    },
+    {
+      "t": "2024-10-11T15:00:00Z",
+      "type": "planting",
+      "v1": "Added Hygrophila siamensis",
+      "notes": "Removed rockwool, trimmed damaged leaves, and planted clumps on both back corners for fast-growing background cover."
     }
   ],
   "photos": [
@@ -62,6 +76,11 @@
       "url": "photos/2024-10-06-water-clearing.png",
       "caption": "Water clearing but still reading zero ammonia",
       "takenAt": "2024-10-06"
+    },
+    {
+      "url": "photos/2024-10-11-hygrophila-after.jpg",
+      "caption": "Background Hygrophila siamensis filling in both back corners",
+      "takenAt": "2024-10-11"
     }
   ]
 }
