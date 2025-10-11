@@ -906,7 +906,7 @@ const DEFAULT_DATA = {
       takenAt: '2024-10-06',
     },
     {
-      url: 'photos/2024-10-11-hygrophila-after.jpg',
+      url: 'photos/2024-10-11-hygrophila-after.png',
       caption: 'Background Hygrophila siamensis filling in both back corners',
       takenAt: '2024-10-11',
     },
