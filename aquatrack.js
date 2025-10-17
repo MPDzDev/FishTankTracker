@@ -863,8 +863,29 @@ const DEFAULT_DATA = {
       date: '2024-10-11',
       notes: 'Split into left and right background groupings for fast vertical growth.',
     },
+    {
+      label: 'Neocaridina orange shrimp',
+      common: 'Neocaridina davidi var. Orange',
+      type: 'invertebrate',
+      count: 11,
+      date: '2024-10-17',
+      notes: 'Active grazers exploring hardscape and biofilm within hours of introduction.',
+    },
   ],
-  measurements: [],
+  measurements: [
+    {
+      t: '2024-10-17T18:00:00Z',
+      ph: '6.5',
+      temp: 'n/a',
+      gh: 'n/a',
+      kh: '6-7 dKH',
+      no3: 'pending',
+      no2: 'pending',
+      nh3: '0.6 mg/L (predominantly NH4+)',
+      notes:
+        'Soft-acidic profile confirmed; ammonia remains harmless at this pH. Daily ammonia/nitrite checks scheduled and RO water top-ups planned.',
+    },
+  ],
   events: [
     {
       t: '2024-10-04T09:00:00Z',
@@ -892,6 +913,13 @@ const DEFAULT_DATA = {
       v1: 'Added Hygrophila siamensis',
       notes:
         'Removed rockwool, trimmed melted leaves, and planted clumps on both back corners for a quick-growing backdrop.',
+    },
+    {
+      t: '2024-10-17T18:30:00Z',
+      type: 'dose',
+      v1: 'Seeded nitrifying bacteria',
+      notes:
+        'Added bottled starter culture to accelerate ammonia processing after livestock introduction; monitoring parameters daily.',
     },
   ],
   photos: [
