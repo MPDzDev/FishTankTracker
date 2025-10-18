@@ -867,9 +867,10 @@ const DEFAULT_DATA = {
       label: 'Neocaridina orange shrimp',
       common: 'Neocaridina davidi var. Orange',
       type: 'invertebrate',
-      count: 11,
+      count: 10,
       date: '2024-10-17',
-      notes: 'Active grazers exploring hardscape and biofilm within hours of introduction.',
+      notes:
+        'Active grazers exploring hardscape and biofilm within hours of introduction; lost one individual overnight on 2024-10-18.',
     },
   ],
   measurements: [
@@ -920,6 +921,13 @@ const DEFAULT_DATA = {
       v1: 'Seeded nitrifying bacteria',
       notes:
         'Added bottled starter culture to accelerate ammonia processing after livestock introduction; monitoring parameters daily.',
+    },
+    {
+      t: '2024-10-18T07:30:00Z',
+      type: 'remove_resident',
+      v1: 'Neocaridina orange shrimp',
+      notes:
+        'Found one shrimp dead after the first night; removed promptly and monitored remaining colony for stress.',
     },
   ],
   photos: [
