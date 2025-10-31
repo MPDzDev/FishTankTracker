@@ -872,6 +872,24 @@ const DEFAULT_DATA = {
       notes:
         'Active grazers exploring hardscape and biofilm within hours of introduction; lost one individual overnight on 2024-10-18.',
     },
+    {
+      label: 'Pygmy corydoras',
+      common: 'Corydoras pygmaeus',
+      type: 'fish',
+      count: 4,
+      date: '2024-10-22',
+      notes:
+        'First schooling fish residents added after ammonia and nitrite registered zero for consecutive days; currently shoaling midwater.',
+    },
+    {
+      label: 'Nerite zebra snail',
+      common: 'Neritina natalensis',
+      type: 'invertebrate',
+      count: 2,
+      date: '2024-10-22',
+      notes:
+        'Algae control crew introduced alongside pygmy corydoras; acclimated via drip and immediately began grazing glass surfaces.',
+    },
   ],
   measurements: [
     {
@@ -929,6 +947,13 @@ const DEFAULT_DATA = {
       notes:
         'Found one shrimp dead after the first night; removed promptly and monitored remaining colony for stress.',
     },
+    {
+      t: '2024-10-22T18:00:00Z',
+      type: 'add_resident',
+      v1: 'Pygmy corydoras & nerite zebra snails',
+      notes:
+        'Nitrogen cycle completed with nitrite at zero; acclimated four pygmy corys and two nerite snails and observed active grazing and schooling.',
+    },
   ],
   photos: [
     {
@@ -945,6 +970,11 @@ const DEFAULT_DATA = {
       url: 'photos/2024-10-11-hygrophila-after.png',
       caption: 'Background Hygrophila siamensis filling in both back corners',
       takenAt: '2024-10-11',
+    },
+    {
+      url: 'photos/2024-10-22-first-livestock.png',
+      caption: 'Post-cycle stocking with pygmy corydoras and nerite snails settled in',
+      takenAt: '2024-10-22',
     },
   ],
 };
